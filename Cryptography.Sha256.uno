@@ -11,7 +11,7 @@ namespace Community.Cryptography
 
     // PORTED TO UNO WITH BASIC REFACTORING: Sean McKay, 2015
 
-    class Converters
+    public class Converters
     {    	
 
         public static string ConvertBytesToHexString (byte[] a_in, bool a_group = true)
@@ -80,11 +80,11 @@ namespace Community.Cryptography
 
     }
 
-    internal class SHA256
+    public class SHA256
     {
         protected readonly uint[] m_state = new uint[8];
 
-        protected readonly HashBuffer m_buffer;
+        private readonly HashBuffer m_buffer;
         protected ulong m_processed_bytes;
         private readonly int m_block_size;
         private readonly int m_hash_size;

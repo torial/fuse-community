@@ -11,6 +11,43 @@ Currently contains:
 
 In addition, it contains sample code for using the libraries.
 
+##Usage
+A Javascript API is available, and the usage of it is shown in the ExampleUsage.ux file.  To link the fuse project to the Community Fuse project make sure that the fuse-community.unoproj is included in your unoproj file like the following:
+
+```
+  "Projects": ["../fuse-community/fuse-community.unoproj"],
+```
+
+Then in your UX file, add a global reference to it:
+```
+		<Community.Api ux:Global="CommunityApi" />
+
+```
+
+And in your Javascript in the UX file:
+```
+			var community = require("CommunityApi");
+
+```
+
+You will likely want to set a salt and pepper for the App:
+```
+			community.setAppSalt("Lowry's");
+			community.setAppPepper("Seasoned");
+
+```
+
+To get the SHA256 hash of a password:
+```
+			var hash = Utils.hashPassword(pwd,salt);
+```
+
+To get a one time password at a particular instance (ie the first, or the fifteenth)
+```
+			var firstOTP= Utils.getOTP(1, pwd); 
+			var fifteenthOTP = Utils.getOTP(15,pwd);
+
+```
 
 ##License
 Unless otherwise noted on individual files, the license is BSD v2.0 : 

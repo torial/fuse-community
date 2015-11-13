@@ -8,6 +8,9 @@ namespace Community.Cryptography
 
     //Sha256 algorithm from: http://hashlib.codeplex.com/
     //License: http://hashlib.codeplex.com/license CDDL
+
+    // PORTED TO UNO WITH BASIC REFACTORING: Sean McKay, 2015
+
     class Converters
     {    	
 

@@ -39,13 +39,13 @@ You will likely want to set a salt and pepper for the App:
 
 To get the SHA256 hash of a password:
 ```
-			var hash = Utils.hashPassword(pwd,salt);
+			var hash = community.hashPassword(pwd,salt);
 ```
 
 To get a one time password at a particular instance (ie the first, or the fifteenth)
 ```
-			var firstOTP= Utils.getOTP(1, pwd); 
-			var fifteenthOTP = Utils.getOTP(15,pwd);
+			var firstOTP= community.getOTP(1, pwd); 
+			var fifteenthOTP = community.getOTP(15,pwd);
 
 ```
 

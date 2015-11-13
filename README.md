@@ -5,8 +5,8 @@ Anything that is useful for developing on the platform made by FuseTools.com
 ##Contents
 
 Currently contains:
-1. An implementation of Sha1, HmacSha1, and OneTimePassword ported from http://www.codeproject.com/Articles/592275/OTP-One-Time-Password-Demystified
-2. An implementation of Sha256 ported from http://hashlib.codeplex.com/
+1.  An implementation of Sha1, HmacSha1, and OneTimePassword ported from http://www.codeproject.com/Articles/592275/OTP-One-Time-Password-Demystified
+2.  An implementation of Sha256 ported from http://hashlib.codeplex.com/
 
 In addition, it contains sample code for using the libraries.
 

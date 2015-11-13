@@ -1,0 +1,37 @@
+{
+  "RootNamespace": "Community",
+  "InternalsVisibleTo": [],
+  "Packages": [
+    "Fuse.Animations",
+    "Fuse.BasicTheme",
+    "Fuse.Controls",
+    "Fuse.Designer",
+    "Fuse.Drawing",
+    "Fuse.Drawing.Primitives",
+    "Fuse.Effects",
+    "Fuse.Elements",
+    "Fuse.Entities",
+    "Fuse.Gestures",
+    "Fuse.Navigation",
+    "Fuse.Reactive",
+    "Fuse.Scripting",
+    "Fuse.Shapes",
+    "Fuse.Triggers",
+	  "Fuse.Android",
+	  "Fuse.iOS",
+	  "Fuse.Desktop",
+    "Fuse.Shapes",
+    "Fuse.Triggers",
+    "FuseCore",
+    "Fuse.PushNotifications",
+    "Uno.Geometry",
+    "Uno.Collections",    
+    "Experimental.TextureLoader",
+
+  ],
+  "Projects": [],
+  "Includes": [
+    "*"
+  ],
+  }
+}

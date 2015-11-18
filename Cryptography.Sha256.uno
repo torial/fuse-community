@@ -35,6 +35,55 @@ namespace Community.Cryptography
             return hex;
         }
 
+        public static byte[] ConvertULongsToBytesSwapOrder(ulong[] a_in, int a_index = 0, int a_length = -1)
+        {
+            if (a_length == -1)
+                a_length = a_in.Length;
+
+            byte[] result = new byte[a_length * 8];
+
+            for (int j = 0; a_length > 0;  a_index++)
+            {
+                result[j++] = (byte)(a_in[a_index] >> 56);
+                result[j++] = (byte)(a_in[a_index] >> 48);
+                result[j++] = (byte)(a_in[a_index] >> 40);
+                result[j++] = (byte)(a_in[a_index] >> 32);
+                result[j++] = (byte)(a_in[a_index] >> 24);
+                result[j++] = (byte)(a_in[a_index] >> 16);
+                result[j++] = (byte)(a_in[a_index] >> 8);
+                result[j++] = (byte)a_in[a_index];
+                a_length--;
+            }
+
+            return result;
+        }
+
+
+
+        public static ulong[] ConvertBytesToULongsSwapOrder(byte[] a_in, int a_index, int a_length)
+        {
+
+            ulong[] result = new ulong[a_length / 8];
+            ConvertBytesToULongsSwapOrder(a_in, a_index, a_length, result);
+            return result;
+        }
+
+        public static void ConvertBytesToULongsSwapOrder(byte[] a_in, int a_index, int a_length, ulong[] a_out)
+        {
+
+            for (int i = 0; a_length > 0; a_length -= 8)
+            {
+                a_out[i++] =
+                    (((ulong)a_in[a_index++] << 56) |
+                    ((ulong)a_in[a_index++] << 48) |
+                    ((ulong)a_in[a_index++] << 40) |
+                    ((ulong)a_in[a_index++] << 32) |
+                    ((ulong)a_in[a_index++] << 24) |
+                    ((ulong)a_in[a_index++] << 16) |
+                    ((ulong)a_in[a_index++] << 8) |
+                    ((ulong)a_in[a_index++]));
+            }
+        }
         public static byte[] ConvertUIntsToBytesSwapOrder (uint[] a_in, int a_index = 0, int a_length = -1)
         {
             if (a_length == -1)

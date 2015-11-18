@@ -16,6 +16,15 @@
 			var hash = Utils.hashPassword(pwd,salt);
 			debug_log("Uno pwd:" + hash);
 
+			var hashNoSalt = Utils.hashPassword(pwd);
+			debug_log("Uno pwd NO SALT: " + hashNoSalt);
+
+			var hash512 = Utils.hashPassword512(pwd,salt);
+			debug_log("Uno pwd 512:" + hash512);
+
+			var hashNoSalt512 = Utils.hashPassword512(pwd);
+			debug_log("Uno pwd 512 NO SALT: " + hashNoSalt512);
+
 
 			var firstOTP= Utils.getOTP(1, pwd); 
 			debug_log("First One-Time Password: " + firstOTP);
@@ -27,7 +36,10 @@
 				fifteenthOTP: fifteenthOTP,
 				userName:userName,
 				pwd:pwd,
-				hash:hash
+				hash:hash,
+				hashNoSalt:hashNoSalt,
+				hash512:hash512,
+				hashNoSalt512:hashNoSalt512
 
 			};
 
@@ -51,6 +63,18 @@
 					<StackPanel Orientation="Horizontal">
 							<Text Value="Sha256 Hash: "/>
 							<Text Value="{hash}"/>
+					</StackPanel>
+					<StackPanel Orientation="Horizontal">
+							<Text Value="Sha256 Hash (No Salt): "/>
+							<Text Value="{hashNoSalt}"/>
+					</StackPanel>
+					<StackPanel Orientation="Horizontal">
+							<Text Value="Sha512 Hash: "/>
+							<Text Value="{hash512}"/>
+					</StackPanel>
+					<StackPanel Orientation="Horizontal">
+							<Text Value="Sha512 Hash (No Salt): "/>
+							<Text Value="{hashNoSalt512}"/>
 					</StackPanel>
 					<StackPanel Orientation="Horizontal">
 							<Text Value="One Time Password (instance 1)"/>

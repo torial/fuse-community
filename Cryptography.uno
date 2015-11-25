@@ -914,6 +914,24 @@ HmacSha1.debugBytes(result, "After FINAL::RESULT");
 
 public class BitConverter
     {
+        public static string ToHex(int toConvert) //simulates the int.ToString("X2") format
+        {
+            StringBuilder sb =new StringBuilder();
+
+            char[] chars = new char[2];
+            chars[1] = ToHex((byte)(((uint)toConvert>>4) & 15));
+            chars[0] = ToHex((byte)((uint)toConvert &15));
+            sb.Append(chars);
+            return sb.ToString();
+
+        }
+
+        private static char ToHex(byte b)
+        {
+            return b < 10 ? (char)(b+48):(char)(b+55);
+        }
+
+
         public static void Clear(byte[] arr, int index, int length)
         {
             for(int i = index; i < index+length; i++)
@@ -943,7 +961,7 @@ public class BitConverter
                     bw.Write(val);
                     byte[] buff= ms.GetBuffer();
                     byte[] longSizedBuff = new byte[8];
-                    Array.Copy(buff,longSizedBuff,8);
+                    Array.Copy(buff,0,longSizedBuff,0,8);
                     return longSizedBuff;
                 }
             }

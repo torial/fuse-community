@@ -113,7 +113,7 @@ namespace Community.Cryptography
             }
         }
 
-        public static void ConvertULongToBytesSwapOrder (ulong a_in, byte[] a_out, int a_index)
+        public static void UnpackULong (ulong a_in, byte[] a_out, int a_index)
         {
             //Debug.Assert (a_index + 8 <= a_out.Length);
 
@@ -225,7 +225,7 @@ namespace Community.Cryptography
             byte[] pad = new byte[padindex + 8];
             pad [0] = 0x80;
 
-            Converters.ConvertULongToBytesSwapOrder (bits, pad, padindex);
+            Converters.UnpackULong (bits, pad, padindex);
             padindex += 8;
 
             TransformBytes (pad, 0, padindex);
@@ -313,7 +313,7 @@ namespace Community.Cryptography
             
     }
 
-    internal class HashBuffer
+    public class HashBuffer
     {
         private byte[] m_data;
         private int m_pos;

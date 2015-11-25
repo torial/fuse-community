@@ -3,23 +3,194 @@ using Uno.Collections;
 using Fuse;
 namespace Community.Cryptography
 {
-	//Sha512 algorithm from: http://hashlib.codeplex.com/
-    //License: http://hashlib.codeplex.com/license CDDL
 
-    // PORTED TO UNO WITH BASIC REFACTORING: Sean McKay, 2015
-	public class SHA512
-	{
 
-		private readonly int m_block_size;
-        private readonly int m_hash_size;
+//MONO: Ported from: https://github.com/mono/mono/blob/8d282b527e884a93872b23b057dcb8e3166975f3/mcs/class/corlib/System.Security.Cryptography/SHA512Managed.cs
+//LICENSE is in original source file.
+//Ported by Sean McKay, 2015
+public class SHA512  {
+    private byte[] xBuf;
+    private int xBufOff;
+    private ulong byteCount1;
+    private ulong byteCount2;
+    private ulong H1, H2, H3, H4, H5, H6, H7, H8;
+    private ulong[] W;
+    private int wOff;
+    public SHA512 ()
+    {
+        xBuf = new byte [8];
+        W = new ulong [80];
+        Initialize (false); // limited initialization
+    }
+    private void Initialize (bool reuse)
+    {
+        // SHA-512 initial hash value
+        // The first 64 bits of the fractional parts of the square roots
+        // of the first eight prime numbers
+        H1 = 0x6a09e667f3bcc908;
+        H2 = 0xbb67ae8584caa73b;
+        H3 = 0x3c6ef372fe94f82b;
+        H4 = 0xa54ff53a5f1d36f1;
+        H5 = 0x510e527fade682d1;
+        H6 = 0x9b05688c2b3e6c1f;
+        H7 = 0x1f83d9abfb41bd6b;
+        H8 = 0x5be0cd19137e2179;
+        if (reuse) {
+            byteCount1 = 0;
+            byteCount2 = 0;
+            xBufOff = 0;
+            for (int i = 0; i < xBuf.Length; i++)
+                xBuf [i] = 0;
+            wOff = 0;
+            for (int i = 0; i != W.Length; i++)
+                W [i] = 0;
+        }
+    }
+    public  void Initialize ()
+    {
+        Initialize (true); // reuse instance
+    }
+    // protected
+    protected void HashCore (byte[] rgb, int ibStart, int cbSize)
+    {
+        // fill the current word
+        while ((xBufOff != 0) && (cbSize > 0)) {
+            update (rgb [ibStart]);
+            ibStart++;
+            cbSize--;
+        }
+        // process whole words.
+        while (cbSize > xBuf.Length) {
+            processWord (rgb, ibStart);
+            ibStart += xBuf.Length;
+            cbSize -= xBuf.Length;
+            byteCount1 += (ulong) xBuf.Length;
+        }
+        // load in the remainder.
+        while (cbSize > 0) {
+            update (rgb [ibStart]);
+            ibStart++;
+            cbSize--;
+        }
+    }
+    protected byte[] HashFinal ()
+    {
+        adjustByteCounts ();
+        ulong lowBitLength = byteCount1 << 3;
+        ulong hiBitLength = byteCount2;
+        // add the pad bytes.
+        update (128);
+        while (xBufOff != 0)
+           update (0);
+        processLength (lowBitLength, hiBitLength);
+        processBlock ();
+        byte[] output = new byte [64];
 
-        public static int BUFFER_SIZE = 64 * 1024;
+        unpackWord(H1, output, 0);
+        unpackWord(H2, output, 8);
+        unpackWord(H3, output, 16);
+        unpackWord(H4, output, 24);
+        unpackWord(H5, output, 32);
+        unpackWord(H6, output, 40);
+        unpackWord(H7, output, 48);
+        unpackWord(H8, output, 56);
+        Initialize ();
+        return output;
+    }
+    private void update (byte input)
+    {
+        xBuf [xBufOff++] = input;
+        if (xBufOff == xBuf.Length) {
+            processWord(xBuf, 0);
+            xBufOff = 0;
+        }
+        byteCount1++;
+    }
+    private void processWord (byte[] input, int inOff)
+    {
+        W [wOff++] = ( (ulong) input [inOff] << 56)
+        | ( (ulong) input [inOff + 1] << 48)
+        | ( (ulong) input [inOff + 2] << 40)
+        | ( (ulong) input [inOff + 3] << 32)
+        | ( (ulong) input [inOff + 4] << 24)
+        | ( (ulong) input [inOff + 5] << 16)
+        | ( (ulong) input [inOff + 6] << 8)
+        | ( (ulong) input [inOff + 7]);
+        if (wOff == 16)
+            processBlock ();
+    }
+    private void unpackWord (ulong word, byte[] output, int outOff)
+    {
+        
+        output[outOff] = (byte) (word >> 56);
+        output[outOff + 1] = (byte) (word >> 48);
+        output[outOff + 2] = (byte) (word >> 40);
+        output[outOff + 3] = (byte) (word >> 32);
+        output[outOff + 4] = (byte) (word >> 24);
+        output[outOff + 5] = (byte) (word >> 16);
+        output[outOff + 6] = (byte) (word >> 8);
+        output[outOff + 7] = (byte) word;
 
-        readonly HashBuffer m_buffer;
-        ulong m_processed_bytes;
+    }
+    // adjust the byte counts so that byteCount2 represents the
+    // upper long (less 3 bits) word of the byte count.
+    private void adjustByteCounts ()
+    {
+        if (byteCount1 > 0x1fffffffffffffff) {
+            byteCount2 += (byteCount1 >> 61);
+            byteCount1 &= 0x1fffffffffffffff;
+        }
+    }
+    private void processLength (ulong lowW, ulong hiW)
+    {
+        if (wOff > 14)
+           processBlock();
+        W[14] = hiW;
+        W[15] = lowW;
+    }
+    private void processBlock ()
+    {
+        adjustByteCounts ();
+        // expand 16 word block into 80 word blocks.
+        for (int t = 16; t <= 79; t++)
+            W[t] = Sigma1 (W [t - 2]) + W [t - 7] + Sigma0 (W [t - 15]) + W [t - 16];
+        // set up working variables.
+        ulong a = H1;
+        ulong b = H2;
+        ulong c = H3;
+        ulong d = H4;
+        ulong e = H5;
+        ulong f = H6;
+        ulong g = H7;
+        ulong h = H8;
+        for (int t = 0; t <= 79; t++) {
+            ulong T1 = h + Sum1 (e) + Ch (e, f, g) + s_K[t] + W [t];  //ShaConstants.K2[t]
+            ulong T2 = Sum0 (a) + Maj (a, b, c);
+            h = g;
+            g = f;
+            f = e;
+            e = d + T1;
+            d = c;
+            c = b;
+            b = a;
+            a = T1 + T2;
+        }
+        H1 += a;
+        H2 += b;
+        H3 += c;
+        H4 += d;
+        H5 += e;
+        H6 += f;
+        H7 += g;
+        H8 += h;
+        // reset the offset and clean out the word buffer.
+        wOff = 0;
+        for (int i = 0; i != W.Length; i++)
+            W[i] = 0;
+    }
 
         //#region Consts
-        protected static readonly ulong[] s_K = new ulong[]
+        private static readonly ulong[] s_K = new ulong[]
         {
              0x428a2f98d728ae22, 0x7137449123ef65cd, 0xb5c0fbcfec4d3b2f, 0xe9b5dba58189dbbc,
              0x3956c25bf348b538, 0x59f111f1b605d019, 0x923f82a4af194f9b, 0xab1c5ed5da6d8118,
@@ -44,237 +215,46 @@ namespace Community.Cryptography
         };
         //#endregion
 
-        protected readonly ulong[] m_state = new ulong[8];
+    private ulong rotateRight (ulong x, int n)
+    {
+        return (x >> n) | (x << (64 - n));
+    }
+    /* SHA-512 and SHA-512 functions (as for SHA-256 but for longs) */
+    private ulong Ch (ulong x, ulong y, ulong z)
+    {
+        return ((x & y) ^ ((~x) & z));
+    }
+    private ulong Maj (ulong x, ulong y, ulong z)
+    {
+        return ((x & y) ^ (x & z) ^ (y & z));
+    }
+    private ulong Sum0 (ulong x)
+    {
+        return rotateRight (x, 28) ^ rotateRight (x, 34) ^ rotateRight (x, 39);
+    }
+    private ulong Sum1 (ulong x)
+    {
+        return rotateRight (x, 14) ^ rotateRight (x, 18) ^ rotateRight (x, 41);
+    }
+    private ulong Sigma0 (ulong x)
+    {
+        return rotateRight (x, 1) ^ rotateRight(x, 8) ^ (x >> 7);
+    }
+    private ulong Sigma1 (ulong x)
+    {
+        return rotateRight (x, 19) ^ rotateRight (x, 61) ^ (x >> 6);
+    }
 
 
+public byte[] ComputeHash (byte[] buffer)
+{
 
+    HashCore (buffer, 0, buffer.Length);
+    byte[] HashValue = HashFinal ();
+    Initialize ();
 
-		protected byte[] GetResult()
-        {
-            return Converters.ConvertULongsToBytesSwapOrder(m_state);
-        }
+    return HashValue;
+}    
+    }
 
-        public void Initialize()
-        {
-            m_state[0] = 0x6a09e667f3bcc908;
-            m_state[1] = 0xbb67ae8584caa73b;
-            m_state[2] = 0x3c6ef372fe94f82b;
-            m_state[3] = 0xa54ff53a5f1d36f1;
-            m_state[4] = 0x510e527fade682d1;
-            m_state[5] = 0x9b05688c2b3e6c1f;
-            m_state[6] = 0x1f83d9abfb41bd6b;
-            m_state[7] = 0x5be0cd19137e2179;
-
-            m_buffer.Initialize();
-            m_processed_bytes = 0;
-        }
-
-
-        public SHA512() //64/128
-        {
-            //Debug.Assert((a_block_size > 0) || (a_block_size == -1));
-            //Debug.Assert(a_hash_size > 0);
-
-            m_block_size = 128;
-            m_hash_size = 64;
-
-            m_buffer = new HashBuffer(128);
-            m_processed_bytes = 0;
-
-
-            Initialize();
-        }
-
-        protected void Finish()
-        {
-            ulong lowBits = m_processed_bytes << 3;
-            ulong hiBits = m_processed_bytes >> 61;
-
-            int padindex = (m_buffer.Pos < 112) ? (111 - m_buffer.Pos) : (239 - m_buffer.Pos);
-
-            padindex++;
-
-            byte[] pad = new byte[padindex + 16];
-            pad[0] = 0x80;
-
-            Converters.ConvertULongToBytesSwapOrder(hiBits, pad, padindex);
-            padindex += 8;
-
-            Converters.ConvertULongToBytesSwapOrder(lowBits, pad, padindex);
-            padindex += 8;
-
-            TransformBytes(pad, 0, padindex);
-        }
-
-        protected void TransformBlock(byte[] a_data, int a_index)
-        {
-            ulong[] data = new ulong[80];
-            Converters.ConvertBytesToULongsSwapOrder(a_data, a_index, BlockSize, data);
-
-            for (int i = 16; i <= 79; ++i)
-            {
-                ulong T0 = data[i - 15];
-                ulong T1 = data[i - 2];
-
-                data[i] = (((T1 << 45) | (T1 >> 19)) ^ ((T1 << 3) | (T1 >> 61)) ^ (T1 >> 6)) + data[i - 7] + 
-                          (((T0 << 63) | (T0 >> 1)) ^ ((T0 << 56)| (T0 >> 8)) ^ (T0 >> 7)) + data[i - 16];
-            }
-
-            ulong a = m_state[0];
-            ulong b = m_state[1];
-            ulong c = m_state[2];
-            ulong d = m_state[3];
-            ulong e = m_state[4];
-            ulong f = m_state[5];
-            ulong g = m_state[6];
-            ulong h = m_state[7];
-
-            for(int i = 0, t = 0; i < 10; i ++)
-            {
-                h += s_K[t] + data[t++] + (((e << 50) | (e >> 14)) ^ ((e << 46) | (e >> 18)) ^ ((e << 23) | (e >> 41))) + 
-                     ((e & f) ^ (~e & g));
-                d += h;
-                h += (((a << 36) | (a >> 28)) ^ ((a << 30) | (a >> 34)) ^ ((a << 25) | (a >> 39))) + 
-                     ((a & b) ^ (a & c) ^ (b & c));
-
-                g += s_K[t] + data[t++] + (((d << 50) | (d >> 14)) ^ ((d << 46) | (d >> 18)) ^ ((d << 23) | (d >> 41))) + 
-                     ((d & e) ^ (~d & f));
-                c += g;
-                g += (((h << 36) | (h >> 28)) ^ ((h << 30) | (h >> 34)) ^ ((h << 25) | (h >> 39))) + 
-                     ((h & a) ^ (h & b) ^ (a & b));
-
-                f += s_K[t] + data[t++] + (((c << 50) | (c >> 14)) ^ ((c << 46) | (c >> 18)) ^ ((c << 23) | (c >> 41))) + 
-                     ((c & d) ^ (~c & e));
-                b += f;
-                f += (((g << 36) | (g >> 28)) ^ ((g << 30) | (g >> 34)) ^ ((g << 25) | (g >> 39))) + 
-                     ((g & h) ^ (g & a) ^ (h & a));
-
-                e += s_K[t] + data[t++] + (((b << 50) | (b >> 14)) ^ ((b << 46) | (b >> 18)) ^ ((b << 23) | (b >> 41))) + 
-                     ((b & c) ^ (~b & d));
-                a += e;
-                e += (((f << 36) | (f >> 28)) ^ ((f << 30) | (f >> 34)) ^ ((f << 25) | (f >> 39))) + 
-                     ((f & g) ^ (f & h) ^ (g & h));
-
-                d += s_K[t] + data[t++] + (((a << 50) | (a >> 14)) ^ ((a << 46) | (a >> 18)) ^ ((a << 23) | (a >> 41))) + 
-                     ((a & b) ^ (~a & c));
-                h += d;
-                d += (((e << 36) | (e >> 28)) ^ ((e << 30) | (e >> 34)) ^ ((e << 25) | (e >> 39))) + 
-                     ((e & f) ^ (e & g) ^ (f & g));
-
-                c += s_K[t] + data[t++] + (((h << 50) | (h >> 14)) ^ ((h << 46) | (h >> 18)) ^ ((h << 23) | (h >> 41))) + 
-                     ((h & a) ^ (~h & b));
-                g += c;
-                c += (((d << 36) | (d >> 28)) ^ ((d << 30) | (d >> 34)) ^ ((d << 25) | (d >> 39))) + 
-                     ((d & e) ^ (d & f) ^ (e & f));
-
-                b += s_K[t] + data[t++] + (((g << 50) | (g >> 14)) ^ ((g << 46) | (g >> 18)) ^ ((g << 23) | (g >> 41))) + 
-                     ((g & h) ^ (~g & a));
-                f += b;
-                b += (((c << 36) | (c >> 28)) ^ ((c << 30) | (c >> 34)) ^ ((c << 25) | (c >> 39))) + 
-                     ((c & d) ^ (c & e) ^ (d & e));
-
-                a += s_K[t] + data[t++] + (((f << 50) | (f >> 14)) ^ ((f << 46) | (f >> 18)) ^ ((f << 23) | (f >> 41))) + 
-                     ((f & g) ^ (~f & h));
-                e += a;
-                a += (((b << 36) | (b >> 28)) ^ ((b << 30) | (b >> 34)) ^ ((b << 25) | (b >> 39))) + 
-                     ((b & c) ^ (b & d) ^ (c & d));
-            }
-
-            m_state[0] += a;
-            m_state[1] += b;
-            m_state[2] += c;
-            m_state[3] += d;
-            m_state[4] += e;
-            m_state[5] += f;
-            m_state[6] += g;
-            m_state[7] += h;
-        }
-
-
-        public void TransformBytes(byte[] a_data, int a_index, int a_length)
-        {
-            //Debug.Assert(a_index >= 0);
-            //Debug.Assert(a_length >= 0);
-            //Debug.Assert(a_index + a_length <= a_data.Length);
-
-            if (!m_buffer.IsEmpty)
-            {
-                if (m_buffer.Feed(a_data, ref a_index, ref a_length, ref m_processed_bytes))
-                    TransformBuffer();
-            }
-
-            while (a_length >= m_buffer.Length)
-            {
-                m_processed_bytes += (ulong)m_buffer.Length;
-                TransformBlock(a_data, a_index);
-                a_index += m_buffer.Length;
-                a_length -= m_buffer.Length;
-            }
-
-            if (a_length > 0)
-                m_buffer.Feed(a_data, ref a_index, ref a_length, ref m_processed_bytes);
-        }
-
-        public byte[] TransformFinal()
-        {
-            Finish();
-
-            //Debug.Assert(m_buffer.IsEmpty);
-
-            byte[] result = GetResult();
-
-            //Debug.Assert(result.Length == HashSize);
-
-            Initialize();
-            return result;
-        }
-
-        protected void TransformBuffer()
-        {
-            //Debug.Assert(m_buffer.IsFull);
-
-            TransformBlock(m_buffer.GetBytes(), 0);
-        }
-
-        public virtual int BlockSize
-        {
-            get
-            {
-                return m_block_size;
-            }
-        }
-
-        public virtual int HashSize
-        {
-            get
-            {
-                return m_hash_size;
-            }
-        }
-
-
-        public void TransformBytes(byte[] a_data)
-        {
-            TransformBytes(a_data, 0, a_data.Length);
-        }
-
-        public void TransformBytes(byte[] a_data, int a_index)
-        {
-            //Debug.Assert(a_index >= 0);
-
-            int length = a_data.Length - a_index;
-
-            //Debug.Assert(length >= 0);
-
-            TransformBytes(a_data, a_index, length);
-        }
-
-        public byte[] ComputeHash (byte[] input)
-        {
-            Initialize ();
-            TransformBytes (input, 0, input.Length);
-            return TransformFinal ();
-        }
-    
-	}
 }

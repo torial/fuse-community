@@ -119,17 +119,59 @@ public class SHA512  {
         if (wOff == 16)
             processBlock ();
     }
+
+      public static ulong shr(ulong n, int shiftwidth) {
+        ulong result = 0;
+        int[] bytes = new int[64];
+        // clear array
+        for (int i=0; i<64; i++) { bytes[i] = 0; };
+        // set bytes
+        for (int i=0; i<64; i++) {
+          int byteval = ((n & (1ul<<i)) > 0) ? 1 : 0;
+          bytes[63-i] = byteval;
+        };
+
+        //string s = "";
+        //for(int i=0; i<64; i++) {
+        //  s = s + bytes[i].ToString();
+        //}
+        //debug_log "Bytes array:" + s;
+
+        // shift right n places
+        for (int i=63; i>=0; i--) {
+          if (i-shiftwidth >= 0)
+            bytes[i] = bytes[i-shiftwidth];
+          else
+            bytes[i] = 0;
+        }
+
+        // reconstruct new ulong
+        for (int i=0; i<64; i++) {
+          result = result * 2 + bytes[i];
+        }
+        return result;
+      }
+
     private void unpackWord (ulong word, byte[] output, int outOff)
     {
         
-        output[outOff] = (byte) (word >> 56);
+        output[outOff] = (byte) (shr(word , 56));
+        output[outOff + 1] = (byte) (shr(word ,48));
+        output[outOff + 2] = (byte) (shr(word, 40));
+        output[outOff + 3] = (byte) (shr(word,32));
+        output[outOff + 4] = (byte) (shr(word ,24));
+        output[outOff + 5] = (byte) (shr(word ,16));
+        output[outOff + 6] = (byte) (shr(word ,8));
+        output[outOff + 7] = (byte) word;
+
+        /*output[outOff] = (byte) (word >> 56);
         output[outOff + 1] = (byte) (word >> 48);
         output[outOff + 2] = (byte) (word >> 40);
         output[outOff + 3] = (byte) (word >> 32);
         output[outOff + 4] = (byte) (word >> 24);
         output[outOff + 5] = (byte) (word >> 16);
         output[outOff + 6] = (byte) (word >> 8);
-        output[outOff + 7] = (byte) word;
+        output[outOff + 7] = (byte) word;*/
 
     }
     // adjust the byte counts so that byteCount2 represents the
@@ -137,7 +179,8 @@ public class SHA512  {
     private void adjustByteCounts ()
     {
         if (byteCount1 > 0x1fffffffffffffff) {
-            byteCount2 += (byteCount1 >> 61);
+            byteCount2 += (shr(byteCount1 ,61));
+            //byteCount2 += (byteCount1 >> 61);
             byteCount1 &= 0x1fffffffffffffff;
         }
     }
@@ -217,7 +260,8 @@ public class SHA512  {
 
     private ulong rotateRight (ulong x, int n)
     {
-        return (x >> n) | (x << (64 - n));
+        return (shr(x ,n)) | (x << (64 - n));
+        //return (x >> n) | (x << (64 - n));
     }
     /* SHA-512 and SHA-512 functions (as for SHA-256 but for longs) */
     private ulong Ch (ulong x, ulong y, ulong z)
@@ -238,11 +282,13 @@ public class SHA512  {
     }
     private ulong Sigma0 (ulong x)
     {
-        return rotateRight (x, 1) ^ rotateRight(x, 8) ^ (x >> 7);
+        return rotateRight (x, 1) ^ rotateRight(x, 8) ^ (shr(x,7));
+        //return rotateRight (x, 1) ^ rotateRight(x, 8) ^ (x >> 7);
     }
     private ulong Sigma1 (ulong x)
     {
-        return rotateRight (x, 19) ^ rotateRight (x, 61) ^ (x >> 6);
+        return rotateRight (x, 19) ^ rotateRight (x, 61) ^ (shr(x, 6));
+        //return rotateRight (x, 19) ^ rotateRight (x, 61) ^ (x >> 6);
     }
 
 

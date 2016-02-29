@@ -1,4 +1,5 @@
 using Uno;
+using Uno.IO;
 using Uno.Collections;
 using Uno.Text;
 using Fuse;
@@ -13,14 +14,49 @@ namespace Community.Cryptography
 
     public class Converters
     {    	
+/*
+        public static byte[] ConvertULongToBytes(ulong u)
+        {
+            MemoryStream s= new MemoryStream();
+            BinaryWriter bw = new BinaryWriter(s);
+            BinaryReader br = new BinaryReader(s);
+
+            bw.Write(u);
+            return br.ReadBytes((int)s.Length);
+        }
+
+        public static ulong ConvertBytesToULong(byte[] byts)
+        {
+            MemoryStream s = new MemoryStream();
+            BinaryWriter bw = new BinaryWriter(s);
+            BinaryReader br = new BinaryReader(s);
+
+            foreach(byte b in byts)
+                bw.Write(b);
+            return br.ReadULong();
+        }
+
+        public static bool IsOdd(byte toCheck)
+        {
+            return toCheck % 2 == 1;
+        }
+
+        public static ulong ShiftRight(ulong toShift)
+        {
+            byte[] byts = ConvertULongToBytes(toShift);
+
+
+            return ConvertBytesToULong(byts);
+
+        }*/
 
         public static string ConvertBytesToHexString (byte[] a_in, bool a_group = true)
         {
-            string hex = BitConverter.ToString (a_in).ToUpper ();
+            string hex = BitConverter.ToHex (a_in).ToUpper ();
 
             if (a_group) {
 
-                string[] ar = BitConverter.ToString (a_in).ToUpper ().Split (new char[] { '-' });
+                string[] ar = BitConverter.ToHex (a_in).ToUpper ().Split (new char[] { '-' });
 
                 hex = "";
 
@@ -141,7 +177,7 @@ namespace Community.Cryptography
         public static int BUFFER_SIZE = 64 * 1024;
 
 
-        #region Consts
+        //#region Consts
 
         private static readonly uint[] s_K = new uint[] {
             0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -154,9 +190,9 @@ namespace Community.Cryptography
             0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
         };
 
-        #endregion
+        //#endregion
 
-        #region ctors
+        //#region ctors
 
         public SHA256 ()
             : this (32)
@@ -186,7 +222,7 @@ namespace Community.Cryptography
             m_hash_size = a_hash_size;
         }
 
-        #endregion
+        //#endregion
 
         public void Initialize ()
         {

@@ -21,7 +21,28 @@ namespace Community
 			AddMember(new NativeFunction("hashPassword512",(NativeCallback)HashPassword512));
 			AddMember(new NativeFunction("setAppSalt",(NativeCallback)SetAppSalt));
 			AddMember(new NativeFunction("setAppPepper",(NativeCallback)SetAppPepper));
+			AddMember(new NativeFunction("generateCodes",(NativeCallback)GenerateCodes));
 		}
+
+		static object GenerateCodes(Context c, object[] args)
+		{
+			ulong[] numbers = new ulong[]{
+				0,120, 3391362420264868341, 8247344706571482433, 11170817084526286401
+			}; 
+			ulong divisor = 2 << 6;
+			foreach(ulong n in numbers)
+			{
+				ulong altResult = Tester.shr2(n,6); //n;
+				//for(int i=0;i<6;i++)
+				//	altResult = altResult/2;
+				debug_log(""+n +"====>" + (n >> 6) + " should be: " + (altResult));
+
+			}
+
+			Tester.testAll();
+			return null;
+		}
+
 
 		static object SetAppSalt(Context c, object[] args)
 		{
@@ -97,7 +118,8 @@ namespace Community
 		      var algorithm = new SHA256 ();
 		      byte[] result = algorithm.ComputeHash (saltedHashBytes);
 		      // return the has as a base 64 encoded string
-		      return Base64.GetString (result).Replace ('/', '%');
+		      //return Base64.GetString (result).Replace ('/', '%');
+		      return BitConverter.ToHex(result);
 	    }//hashPwd
 
 	    static string hashPwd512 (string password, string salt)
@@ -114,7 +136,8 @@ namespace Community
 		      var algorithm = new SHA512 ();
 		      byte[] result = algorithm.ComputeHash (saltedHashBytes);
 		      // return the has as a base 64 encoded string
-		      return Base64.GetString (result).Replace ('/', '%');
+		      //return Base64.GetString (result).Replace ('/', '%');
+		      return BitConverter.ToHex(result);
 	    }//hashPwd512	    
 
 
@@ -126,7 +149,8 @@ namespace Community
 		      var algorithm = new SHA256 ();
 		      byte[] result = algorithm.ComputeHash (saltedHashBytes);
 		      // return the has as a base 64 encoded string
-		      return Base64.GetString (result).Replace ('/', '%');
+		      //return Base64.GetString (result).Replace ('/', '%');
+		      return BitConverter.ToHex(result);
 	    }//hashPwd
 
 	    static string hashPwd512 (string password)
@@ -136,7 +160,8 @@ namespace Community
 		      var algorithm = new SHA512 ();
 		      byte[] result = algorithm.ComputeHash (saltedHashBytes);
 		      // return the has as a base 64 encoded string
-		      return Base64.GetString (result).Replace ('/', '%');
+		      //return Base64.GetString (result).Replace ('/', '%');
+		      return BitConverter.ToHex(result);
 	    }//hashPwd512	    
 
 	}

@@ -8,11 +8,11 @@
 			var Utils = require("CommunityApi");
 			Utils.setAppSalt("Lowry's");
 			Utils.setAppPepper("Seasoned");
-			//Utils.generateCodes();
+			Utils.generateCodes();
 
 			var userName = "jimmy";
 			var salt = userName;
-			var pwd = "ultraSecretPwd1";
+			var pwd = "ultraSecretPwd12345678910";
 
 			var hash = Utils.hashPassword(pwd,salt);
 			debug_log("Uno pwd:" + hash);
@@ -26,6 +26,8 @@
 			var hashNoSalt512 = Utils.hashPassword512(pwd);
 			debug_log("Uno pwd 512 NO SALT: " + hashNoSalt512);
 	
+			Utils.setAppSalt("");
+			Utils.setAppPepper("");
 			var firstOTP= Utils.getOTP(1, pwd); 
 			debug_log("First One-Time Password: " + firstOTP);
 			var fifteenthOTP = Utils.getOTP(15,pwd);

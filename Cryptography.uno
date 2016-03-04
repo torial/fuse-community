@@ -64,6 +64,7 @@ namespace Community.Cryptography
 
         static long xorEm(long x, long y, long z)
         {
+            //debug_log("XorEM: " + x + " xor " + y + " xor " + z + " = " + (x^y^z));
             return (x ^ y ^ z);
         }
 
@@ -122,53 +123,88 @@ namespace Community.Cryptography
 
         static long Mask32Bit(long x)
         {
+            string ls = x.ToString();
+            ulong ul;
+            if (!ulong.TryParse(ls,out ul))
+            {
+                debug_log("Mask32Bit Invalid long-->ulong: '" + ls + "'");
+                return 0;
+            }
+            return Mask32Bit(ul);
+        }
+
+        static long Mask32Bit(ulong x)
+        {
             unchecked
             {
-                return (x & 0xFFFFFFFF);
+                return (long)(x & maskInt); //0xFFFFFFFF);
             }
         }
 
-        static long Rotate32Bit(long x, int n)
+        static long RotateLeft32Bit(long x, int n)
         {
-            return Mask32Bit(((x << n) | (x >> (32 - n))));
+            return Mask32Bit(SHA512.rotateleft(ulong.Parse(x.ToString()),n));
+            //return Mask32Bit(((x << n) | (long)SHA512.shr((ulong)x,32-n))); 
+            //return Mask32Bit(((x << n) | (x >> (32 - n))));
+        }
+
+        static long MaskedRotateLeft32Bit(long x, int n)
+        {
+            return long.Parse(SHA512.maskedrotateleft(ulong.Parse(x.ToString()),n,32).ToString());
+            //return Mask32Bit(((x << n) | (long)SHA512.shr((ulong)x,32-n))); 
+            //return Mask32Bit(((x << n) | (x >> (32 - n))));
         }
 
         //#region Unraveled Rotation functions
 
         static void ModifyTB(int n, ref SHA_TRANSF t)
         {
-            t.T = Mask32Bit(Rotate32Bit(t.A, 5) + f(n, t.B, t.C, t.D) + t.E + t.W[t.idxW++] + CONST[n - 1]);
-            t.B = Rotate32Bit(t.B, 30);
+            long mrl =MaskedRotateLeft32Bit(t.A, 5);
+            long fnbcd = f(n, t.B, t.C, t.D);
+            t.T =  Mask32Bit(mrl + fnbcd + t.E + t.W[t.idxW++] + CONST[n - 1]);
+            //debug_log("TA:" + t.A + "::MRL:" +mrl + "::FNBCD:" + fnbcd);
+            t.B = MaskedRotateLeft32Bit(t.B, 30);
         }
 
         static void ModifyEA(int n, ref SHA_TRANSF t)
         {
-            t.E = Mask32Bit(Rotate32Bit(t.T, 5) + f(n, t.A, t.B, t.C) + t.D + t.W[t.idxW++] + CONST[n - 1]);
-            t.A = Rotate32Bit(t.A, 30);
+            t.E = Mask32Bit(MaskedRotateLeft32Bit(t.T, 5) + f(n, t.A, t.B, t.C) + t.D + t.W[t.idxW++] + CONST[n - 1]);
+            long ta = t.A;
+            t.A = MaskedRotateLeft32Bit(t.A, 30);
+            //debug_log("TA: " + ta + " =RL30=> " + t.A);
         }
 
         static void ModifyDT(int n, ref SHA_TRANSF t)
         {
-            t.D = Mask32Bit(Rotate32Bit(t.E, 5) + f(n, t.T, t.A, t.B) + t.C + t.W[t.idxW++] + CONST[n - 1]);
-            t.T = Rotate32Bit(t.T, 30);
+            t.D = Mask32Bit(MaskedRotateLeft32Bit(t.E, 5) + f(n, t.T, t.A, t.B) + t.C + t.W[t.idxW++] + CONST[n - 1]);
+            t.T = MaskedRotateLeft32Bit(t.T, 30);
         }
 
         static void ModifyCE(int n, ref SHA_TRANSF t)
         {
-            t.C = Mask32Bit(Rotate32Bit(t.D, 5) + f(n, t.E, t.T, t.A) + t.B + t.W[t.idxW++] + CONST[n - 1]);
-            t.E = Rotate32Bit(t.E, 30);
+            t.C = Mask32Bit(MaskedRotateLeft32Bit(t.D, 5) + f(n, t.E, t.T, t.A) + t.B + t.W[t.idxW++] + CONST[n - 1]);
+            long te = t.E;
+            t.E = MaskedRotateLeft32Bit(t.E, 30);
+            //debug_log("TE: " + te + " =RL30=> " + t.E);
+
         }
 
         static void ModifyBD(int n, ref SHA_TRANSF t)
         {
-            t.B = Mask32Bit(Rotate32Bit(t.C, 5) + f(n, t.D, t.E, t.T) + t.A + t.W[t.idxW++] + CONST[n - 1]);
-            t.D = Rotate32Bit(t.D, 30);
+            long mrl = MaskedRotateLeft32Bit(t.C, 5);
+            long fndet = f(n, t.D, t.E, t.T);
+            long sum = mrl + fndet + t.A + t.W[t.idxW++] + CONST[n - 1];
+            t.B = Mask32Bit(sum);
+            //long tB = t.B;
+            t.D = MaskedRotateLeft32Bit(t.D, 30);
+            //debug_log("TC:" + t.C + "::MRL:" +mrl + "::FNDET:" + fndet+"::tW[t.idxW]:" + t.W[t.idxW-1] + "::CONST:"+CONST[n-1]+"::SUM:" + sum + "::TB:" + t.B);
+
         }
 
         static void ModifyAT(int n, ref SHA_TRANSF t)
         {
-            t.A = Mask32Bit(Rotate32Bit(t.B, 5) + f(n, t.C, t.D, t.E) + t.T + t.W[t.idxW++] + CONST[n - 1]);
-            t.C = Rotate32Bit(t.C, 30);
+            t.A = Mask32Bit(MaskedRotateLeft32Bit(t.B, 5) + f(n, t.C, t.D, t.E) + t.T + t.W[t.idxW++] + CONST[n - 1]);
+            t.C = MaskedRotateLeft32Bit(t.C, 30);
         }
 
         //#endregion
@@ -185,20 +221,27 @@ namespace Community.Cryptography
             /* SHA_BYTE_ORDER == 1234 */
             for (i = 0; i < 16; ++i)
             {
-                tf.T = ((long)data[idx++]) & 0x000000ff;
-                tf.T += (((long)data[idx++]) << 8) & 0x0000ff00;
-                tf.T += (((long)data[idx++]) << 16) & 0x00ff0000;
-                tf.T += (((long)data[idx++]) << 24) & 0xff000000;
+                tf.T = ((long)data[idx++]) & maskFirstByte; // 0x000000ff;
+                tf.T += (((long)data[idx++]) << 8) & maskSecondByte; // 0x0000ff00;
+                tf.T += (((long)data[idx++]) << 16) & maskThirdByte; // 0x00ff0000;
+                tf.T += (((long)data[idx++]) << 24) & maskFourthByte; // 0xff000000;
 
-                tf.W[i] = ((tf.T << 24) & 0xff000000) | ((tf.T << 8) & 0x00ff0000) |
-                ((tf.T >> 8) & 0x0000ff00) | ((tf.T >> 24) & 0x000000ff);
+                //tf.W[i] = ((tf.T << 24) & 0xff000000) | ((tf.T << 8) & 0x00ff0000) |
+                //((tf.T >> 8) & 0x0000ff00) | ((tf.T >> 24) & 0x000000ff);
+                ulong tfT = ulong.Parse(tf.T.ToString());
+                tf.W[i] = ((tf.T << 24) & maskFourthByte) | // & 0xff000000) | 
+                    ((tf.T << 8) & maskThirdByte) | // & 0x00ff0000) |
+                    (((long)SHA512.shr(tfT ,8)) & maskSecondByte) | // 0x0000ff00) | 
+                    (((long)SHA512.shr(tfT ,24)) & maskFirstByte); // & 0x000000ff);
             }
 
+            //HmacSha1.debugBytes(tf.W, "Initial W:");
             for (i = 16; i < 80; ++i)
             {
                 tf.W[i] = tf.W[i - 3] ^ tf.W[i - 8] ^ tf.W[i - 14] ^ tf.W[i - 16];
-                tf.W[i] = Rotate32Bit(tf.W[i], 1);
+                tf.W[i] = MaskedRotateLeft32Bit(tf.W[i], 1);
             }
+            //HmacSha1.debugBytes(tf.W, "Updated W:");
 
             tf.A = digest[0];
             tf.B = digest[1];
@@ -212,10 +255,15 @@ namespace Community.Cryptography
             ModifyTB(1, ref tf);
             //debug_log "::AFTER::MODIFYTB::" + tf.ToString();
             ModifyEA(1, ref tf);
+            //debug_log "::AFTER::MODIFYEA::" + tf.ToString();
             ModifyDT(1, ref tf);
+            //debug_log "::AFTER::MODIFYDT::" + tf.ToString();
             ModifyCE(1, ref tf);
+            //debug_log "::AFTER::MODIFYCE::" + tf.ToString();
             ModifyBD(1, ref tf);
+            //debug_log "::AFTER::MODIFYBD::" + tf.ToString();
             ModifyAT(1, ref tf);
+            //debug_log "::AFTER::MODIFYAT::" + tf.ToString();
             ModifyTB(1, ref tf);
             ModifyEA(1, ref tf);
             ModifyDT(1, ref tf);
@@ -230,27 +278,49 @@ namespace Community.Cryptography
             ModifyAT(1, ref tf);
             ModifyTB(1, ref tf);
             ModifyEA(1, ref tf);
+            //debug_log("BATCH 1 --> TF HAS: " + tf.ToString());
+
 
             ModifyDT(2, ref tf);
+            //debug_log("BATCH 2 DT --> TF HAS: " + tf.ToString());
             ModifyCE(2, ref tf);
+            //debug_log("BATCH 2 CE --> TF HAS: " + tf.ToString());
             ModifyBD(2, ref tf);
+            //debug_log("BATCH 2 BD --> TF HAS: " + tf.ToString());
             ModifyAT(2, ref tf);
+            //debug_log("BATCH 2 AT --> TF HAS: " + tf.ToString());
             ModifyTB(2, ref tf);
+            //debug_log("BATCH 2 TB --> TF HAS: " + tf.ToString());
             ModifyEA(2, ref tf);
+            //debug_log("BATCH 2 EA --> TF HAS: " + tf.ToString());
             ModifyDT(2, ref tf);
+            //debug_log("BATCH 2 DT --> TF HAS: " + tf.ToString());
             ModifyCE(2, ref tf);
+            //debug_log("BATCH 2 CE --> TF HAS: " + tf.ToString());
             ModifyBD(2, ref tf);
+            //debug_log("BATCH 2 BD --> TF HAS: " + tf.ToString());
             ModifyAT(2, ref tf);
+            //debug_log("BATCH 2 AT --> TF HAS: " + tf.ToString());
             ModifyTB(2, ref tf);
+            //debug_log("BATCH 2 TB --> TF HAS: " + tf.ToString());
             ModifyEA(2, ref tf);
+            //debug_log("BATCH 2 EA --> TF HAS: " + tf.ToString());
             ModifyDT(2, ref tf);
+            //debug_log("BATCH 2 DT --> TF HAS: " + tf.ToString());
             ModifyCE(2, ref tf);
+            //debug_log("BATCH 2 CE --> TF HAS: " + tf.ToString());
             ModifyBD(2, ref tf);
+            //debug_log("BATCH 2 BD --> TF HAS: " + tf.ToString());
             ModifyAT(2, ref tf);
+            //debug_log("BATCH 2 AT --> TF HAS: " + tf.ToString());
             ModifyTB(2, ref tf);
+            //debug_log("BATCH 2 TB --> TF HAS: " + tf.ToString());
             ModifyEA(2, ref tf);
+            //debug_log("BATCH 2 EA --> TF HAS: " + tf.ToString());
             ModifyDT(2, ref tf);
+            //debug_log("BATCH 2 DT --> TF HAS: " + tf.ToString());
             ModifyCE(2, ref tf);
+            //debug_log("BATCH 2 CE --> TF HAS: " + tf.ToString());
 
             ModifyBD(3, ref tf);
             ModifyAT(3, ref tf);
@@ -272,6 +342,7 @@ namespace Community.Cryptography
             ModifyCE(3, ref tf);
             ModifyBD(3, ref tf);
             ModifyAT(3, ref tf);
+            //debug_log("BATCH 3 --> TF HAS: " + tf.ToString());
 
             ModifyTB(4, ref tf);
             ModifyEA(4, ref tf);
@@ -294,14 +365,20 @@ namespace Community.Cryptography
             ModifyTB(4, ref tf);
             ModifyEA(4, ref tf);
 
-            HmacSha1.debugBytes(digest, "sha_transform::PRESET");
+            //HmacSha1.debugBytes(digest, "sha_transform::PRESET");
             //debug_log "--> TF HAS: " + tf.ToString();
             digest[0] = Mask32Bit(digest[0] + tf.E);
             digest[1] = Mask32Bit(digest[1] + tf.T);
             digest[2] = Mask32Bit(digest[2] + tf.A);
             digest[3] = Mask32Bit(digest[3] + tf.B);
             digest[4] = Mask32Bit(digest[4] + tf.C);
-            HmacSha1.debugBytes(digest, "sha_transform::POSTSET");
+            //long v = 0xFFFFFFFF;
+            //debug_log("V1: " + v.ToString());
+
+            //v = long.Parse("4294967295"); //0xFFFFFFFF
+            //debug_log("V3: " + v.ToString());
+            //HmacSha1.debugBytes(CONST,"RAW CONST");
+            //HmacSha1.debugBytes(digest, "sha_transform::POSTSET");
         }
 
         public const ushort LITTLE_INDIAN = 1234;
@@ -322,8 +399,23 @@ namespace Community.Cryptography
 
         //#endregion
 
+        private static ulong maskInt;
+        private static long maskFirstByte;
+        private static long maskSecondByte;
+        private static long maskThirdByte;
+        private static long maskFourthByte;
         public Sha1()
         {
+
+        }
+
+        static Sha1()
+        {
+            maskInt = ulong.Parse("4294967295"); //0xFFFFFFFF);Action
+            maskFirstByte = long.Parse("255");  //0xFF
+            maskSecondByte = long.Parse("65280"); //0xFF00
+            maskThirdByte = long.Parse("16711680"); //0xFF0000
+            maskFourthByte = long.Parse("4278190080"); //0xFF000000
         }
 
         /// <summary>
@@ -334,13 +426,13 @@ namespace Community.Cryptography
             data = new byte[SHA_BLOCKSIZE];
             digest = new long[5];
 
-            digest[0] = 1732584193L;
-            digest[1] = 4023233417L;
-            digest[2] = 2562383102L;
-            digest[3] = 271733878L;
-            digest[4] = 3285377520L;
+            digest[0] = long.Parse("1732584193"); //1732584193L;
+            digest[1] = long.Parse("4023233417"); //4023233417L;
+            digest[2] = long.Parse("2562383102"); //2562383102L;
+            digest[3] = long.Parse("271733878"); //271733878L;
+            digest[4] = long.Parse("3285377520"); //3285377520L;
             //LOG: ::INIT::DIGEST::1732584193:-271733879:-1732584194:271733878:-1009589776:
-            HmacSha1.debugBytes(digest, "::INIT::DIGEST");
+            //HmacSha1.debugBytes(digest, "::INIT::DIGEST");
             count_lo = 0L;
             count_hi = 0L;
             local = 0;
@@ -363,7 +455,7 @@ namespace Community.Cryptography
                 ++count_hi;
             }
             count_lo = clo;
-            count_hi += (long)count >> 29;
+            count_hi += (long)SHA512.shr(count,29); // (long)count >> 29;
             if (local != 0)
             {
                 i = SHA_BLOCKSIZE - local;
@@ -423,7 +515,8 @@ namespace Community.Cryptography
 
             lo_bit_count = count_lo;
             hi_bit_count = count_hi;
-            count = (int)((lo_bit_count >> 3) & 0x3f);
+            //count = (int)((lo_bit_count >> 3) & 0x3f);
+            count = (int)((long)SHA512.shr((ulong)lo_bit_count , 3) & 0x3f);
             data[count++] = 0x80;
             if (count > SHA_BLOCKSIZE - 8)
             {
@@ -447,6 +540,7 @@ namespace Community.Cryptography
                     data[nI + count] = 0;
                 }
             }
+
 
             data[56] = (byte)((hi_bit_count >> 24) & 0xff);
             data[57] = (byte)((hi_bit_count >> 16) & 0xff);
@@ -550,6 +644,21 @@ HmacSha1.debugBytes(result, "After FINAL::RESULT");
         public static string    version()
         {
             return "SHA-1";
+        }
+
+        public static byte[] GetSha1(byte[] key)
+        {
+            Sha1 sha = new Sha1();
+            sha.Init();
+            sha.Update(key);
+            return sha.Final();
+        }
+
+        public static string GetSha1(string key)
+        {
+            byte[] bKey = Utf8.GetBytes(key);
+            byte[] result = GetSha1(bKey);
+            return BitConverter.ToHex(result);
         }
     }
 
@@ -679,7 +788,7 @@ HmacSha1.debugBytes(result, "After FINAL::RESULT");
 
         public static void debugBytes<T>(T[] toPrint, string msg)
         {
-            /*
+            
                     StringBuilder sb = new StringBuilder();
             foreach(T b in toPrint)
             {
@@ -688,7 +797,7 @@ HmacSha1.debugBytes(result, "After FINAL::RESULT");
             }
 
             debug_log msg + "::" + sb.ToString();
-            */
+            
         }
     }
 
@@ -814,7 +923,7 @@ HmacSha1.debugBytes(result, "After FINAL::RESULT");
                 sb.Append(":");
             }
 
-            //debug_log "HMAC::" + sb.ToString();
+            debug_log "HMAC::" + sb.ToString();
             int offset = hmac[19] & 0xf;
             int bin_code = (hmac[offset] & 0x7f) << 24
                            | (hmac[offset + 1] & 0xff) << 16
@@ -824,7 +933,7 @@ HmacSha1.debugBytes(result, "After FINAL::RESULT");
             int Code_Digits = bin_code % 10000000;
             int csum = getChecksum(Code_Digits);
             int OTP = Code_Digits * 10 + csum;
-            //debug_log "FOTP::" + offset + "::" + bin_code + "::" + Code_Digits + "::" + csum + "::" + OTP + "::" + hmac.Length;
+            debug_log "FOTP::" + hmac[19] + "::" + offset + "::" + bin_code + "::" + Code_Digits + "::" + csum + "::" + OTP + "::" + hmac.Length;
 
             return string.Format("{0:d08}", OTP);
         }
@@ -921,7 +1030,7 @@ public class BitConverter
             for (int i=0; i<bytes.Length; i++) {
                 sbResult.Append(String.Format("{0:x2}", bytes[i]));
             }
-            return sbResult.ToString();
+            return sbResult.ToString().ToUpper();
         }
 
 
@@ -974,6 +1083,34 @@ public class BitConverter
         };
         return n;
       }
+/*
+      public static byte[] getBytes(ulong n)
+      {
+        byte[] bits = new byte[64];
+        // clear array
+        for (int i=0; i<64; i++) { bits[i] = 0; };
+        // set bits
+        for (int i=0; i<64; i++) {
+          byte byteval = ((n & (1ul<<i)) > 0) ? (byte)1 : (byte)0;
+          bits[63-i] = byteval;
+        };
+
+        int baseLine = 0;
+        byte[] result = new byte[8];
+        for(int iByte =0; iByte < 8; iByte++)
+        {   
+            byte curValue = 0;
+            baseLine = 8*iByte;
+
+            for(int offset = 0; offset < 8; offset++)
+            {
+                byte bit = bits[baseLine + offset];
+                curValue = (byte)(curValue<<1) + bit;
+            }
+            result[iByte] = curValue;
+        }
+        return result;
+      }*/
 
       public static ulong shr2(ulong n, int shiftwidth) {
         ulong result = 0;

@@ -26,22 +26,76 @@ namespace Community
 
 		static object GenerateCodes(Context c, object[] args)
 		{
+
 			ulong[] numbers = new ulong[]{
-				0,120, 3391362420264868341, 8247344706571482433, 11170817084526286401
+				0 ,120, 3391362420264868341, 8247344706571482433, 11170817084526286401
 			}; 
-			ulong divisor = 2 << 6;
 			foreach(ulong n in numbers)
 			{
-				ulong altResult = Tester.shr2(n,6); //n;
-				//for(int i=0;i<6;i++)
-				//	altResult = altResult/2;
-				debug_log(""+n +"====>" + (n >> 6) + " should be: " + (altResult));
-
+				string shad = Sha1.GetSha1(n.ToString());
+				debug_log(""+n +"====>" + shad);
+				
 			}
+			//debug_log(""+5 + "====>" + SHA512.rotateleft(5,2));
+			/*
+			var l =  long.Parse("1956300319");
+			var rl = maskedrotateleft(ulong.Parse(l.ToString()),5,32);
+			debug_log("ROTATE LEFT: "+l + "====>" + rl);
+			l = long.Parse("721293358");
+			rl = maskedrotateleft(ulong.Parse(l.ToString()),5,32);
+			debug_log("ROTATE LEFT: "+l + "====>" + rl);
+//*/
 
-			Tester.testAll();
+			//Tester.testAll();
 			return null;
 		}
+    public static ulong maskedrotateleft(ulong n, int shiftwidth, int maskedBits) {
+        if (maskedBits > 63)
+            throw new InvalidOperationException("Masked Bits must be less than 64, found: " + maskedBits);
+        ulong result = 0;
+        int[] bytes = new int[64];
+        int[] bytesOrig = new int[64];
+        // clear array
+        for (int i=0; i<64; i++) { bytes[i] = 0; };
+        // set bytes
+        for (int i=0; i<64; i++) {
+          int byteval = ((n & (1ul<<i)) > 0) ? 1 : 0;
+          bytes[63-i] = byteval;
+          bytesOrig[63-i] = byteval;
+        };
+
+//*
+        string s = "";
+        for(int i=0; i<64; i++) {
+          s = s + bytes[i].ToString();
+        }
+        debug_log "Bytes array:" + s;
+//*/
+        // shift left n places
+        for (int i=0; i<=63; i++) {
+          if (i+shiftwidth < bytes.Length)
+            bytes[i] = bytesOrig[i+shiftwidth];
+          else
+            bytes[i] = bytesOrig[(i+shiftwidth)%bytes.Length];
+        }
+        for (int i=maskedBits-shiftwidth;i<maskedBits; i++)
+        {
+        	bytes[i+maskedBits] = bytes[i]; 
+        }
+//*        
+        s = "";
+        for(int i=0; i<64; i++) {
+          s = s + bytes[i].ToString();
+        }
+        debug_log "Post Shift Bytes array:" + s;
+//*/
+
+        // reconstruct new ulong
+        for (int i=64-maskedBits; i<64; i++) {
+          result = result * 2 + bytes[i];
+        }
+        return result;
+      }	
 
 
 		static object SetAppSalt(Context c, object[] args)
@@ -92,6 +146,7 @@ namespace Community
 			try{
 				string challenge = args[1].ToString();
 				int instance = int.Parse( args[0].ToString());
+				
 				OneTimePassword otp = new OneTimePassword(instance, _appSalt + challenge + _appPepper);
 	            return otp.GetCurrent();
 

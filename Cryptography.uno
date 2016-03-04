@@ -550,10 +550,10 @@ namespace Community.Cryptography
             data[61] = (byte)((lo_bit_count >> 16) & 0xff);
             data[62] = (byte)((lo_bit_count >> 8) & 0xff);
             data[63] = (byte)((lo_bit_count >> 0) & 0xff);
-HmacSha1.debugBytes(digest, "BEFORE FINAL::MEM::TRANSFORM::DIGEST");
+//HmacSha1.debugBytes(digest, "BEFORE FINAL::MEM::TRANSFORM::DIGEST");
 
             sha_transform();
-HmacSha1.debugBytes(digest, "After FINAL::MEM::TRANSFORM::DIGEST");
+//HmacSha1.debugBytes(digest, "After FINAL::MEM::TRANSFORM::DIGEST");
             result[0] = (byte)((digest[0] >> 24) & 0xff);
             result[1] = (byte)((digest[0] >> 16) & 0xff);
             result[2] = (byte)((digest[0] >> 8) & 0xff);
@@ -574,7 +574,7 @@ HmacSha1.debugBytes(digest, "After FINAL::MEM::TRANSFORM::DIGEST");
             result[17] = (byte)((digest[4] >> 16) & 0xff);
             result[18] = (byte)((digest[4] >> 8) & 0xff);
             result[19] = (byte)((digest[4]) & 0xff);
-HmacSha1.debugBytes(result, "After FINAL::RESULT");
+//HmacSha1.debugBytes(result, "After FINAL::RESULT");
 
             return result;
         }
@@ -771,7 +771,7 @@ HmacSha1.debugBytes(result, "After FINAL::RESULT");
             }
 
             digest = sha_ctx.Final();         /* finish up 1st pass */
-   debugBytes(digest, "After DIGEST");
+   //debugBytes(digest, "After DIGEST");
             /*
                * perform outer SHA1
                */
@@ -782,7 +782,7 @@ HmacSha1.debugBytes(result, "After FINAL::RESULT");
             /* then results of 1st hash  */
             sha_ctx.Update(digest);
             digest = sha_ctx.Final();         /* finish up 2nd pass        */
-                  debugBytes(digest, "After FINAL DIGEST");
+    //              debugBytes(digest, "After FINAL DIGEST");
             return digest;
         }
 
@@ -923,7 +923,7 @@ HmacSha1.debugBytes(result, "After FINAL::RESULT");
                 sb.Append(":");
             }
 
-            debug_log "HMAC::" + sb.ToString();
+            //debug_log "HMAC::" + sb.ToString();
             int offset = hmac[19] & 0xf;
             int bin_code = (hmac[offset] & 0x7f) << 24
                            | (hmac[offset + 1] & 0xff) << 16
@@ -933,7 +933,7 @@ HmacSha1.debugBytes(result, "After FINAL::RESULT");
             int Code_Digits = bin_code % 10000000;
             int csum = getChecksum(Code_Digits);
             int OTP = Code_Digits * 10 + csum;
-            debug_log "FOTP::" + hmac[19] + "::" + offset + "::" + bin_code + "::" + Code_Digits + "::" + csum + "::" + OTP + "::" + hmac.Length;
+            //debug_log "FOTP::" + hmac[19] + "::" + offset + "::" + bin_code + "::" + Code_Digits + "::" + csum + "::" + OTP + "::" + hmac.Length;
 
             return string.Format("{0:d08}", OTP);
         }

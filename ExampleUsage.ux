@@ -8,7 +8,6 @@
 			var Utils = require("CommunityApi");
 			Utils.setAppSalt("Lowry's");
 			Utils.setAppPepper("Seasoned");
-			Utils.generateCodes();
 
 			var userName = "jimmy";
 			var salt = userName;
@@ -32,6 +31,7 @@
 			debug_log("First One-Time Password: " + firstOTP);
 			var fifteenthOTP = Utils.getOTP(15,pwd);
 			debug_log("Fifteenth One-Time Password: " + fifteenthOTP);
+			Utils.generateCodes();
 
 			module.exports = {
 				firstOTP: firstOTP,

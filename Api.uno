@@ -26,7 +26,7 @@ namespace Community
 
 		static object GenerateCodes(Context c, object[] args)
 		{
-
+/*
 			ulong[] numbers = new ulong[]{
 				0 ,120, 3391362420264868341, 8247344706571482433, 11170817084526286401
 			}; 
@@ -36,6 +36,9 @@ namespace Community
 				debug_log(""+n +"====>" + shad);
 				
 			}
+			*/
+			OneTimePassword otp = new OneTimePassword(1, "test");
+			debug_log("OTP: " + otp.GetCurrent());
 			//debug_log(""+5 + "====>" + SHA512.rotateleft(5,2));
 			/*
 			var l =  long.Parse("1956300319");

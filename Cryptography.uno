@@ -109,17 +109,6 @@ namespace Community.Cryptography
 
         //#endregion
 
-        //#region SHA constants
-
-        static uint[] CONST = new uint[4]
-        {
-            0x5a827999,
-            0x6ed9eba1,
-            0x8f1bbcdc,
-            0xca62c1d6
-        };
-
-        //#endregion
 
         static long Mask32Bit(long x)
         {
@@ -193,11 +182,11 @@ namespace Community.Cryptography
         {
             long mrl = MaskedRotateLeft32Bit(t.C, 5);
             long fndet = f(n, t.D, t.E, t.T);
-            long sum = mrl + fndet + t.A + t.W[t.idxW++] + CONST[n - 1];
+            long sum = mrl + fndet + t.A + t.W[t.idxW++] + long.Parse(CONST[n - 1].ToString());
             t.B = Mask32Bit(sum);
             //long tB = t.B;
             t.D = MaskedRotateLeft32Bit(t.D, 30);
-            //debug_log("TC:" + t.C + "::MRL:" +mrl + "::FNDET:" + fndet+"::tW[t.idxW]:" + t.W[t.idxW-1] + "::CONST:"+CONST[n-1]+"::SUM:" + sum + "::TB:" + t.B);
+            // debug_log("TC:" + t.C + "::MRL:" +mrl + "::FNDET:" + fndet+"::tW[t.idxW]:" + t.W[t.idxW-1] + "::CONST:"+CONST[n-1]+"::SUM:" + sum + "::TB:" + t.B);
 
         }
 
@@ -208,6 +197,8 @@ namespace Community.Cryptography
         }
 
         //#endregion
+
+
 
         private void sha_transform()
         {
@@ -225,6 +216,7 @@ namespace Community.Cryptography
                 tf.T += (((long)data[idx++]) << 8) & maskSecondByte; // 0x0000ff00;
                 tf.T += (((long)data[idx++]) << 16) & maskThirdByte; // 0x00ff0000;
                 tf.T += (((long)data[idx++]) << 24) & maskFourthByte; // 0xff000000;
+                //debug_log("Round: " + i +  "   TFT: " + tf.T);
 
                 //tf.W[i] = ((tf.T << 24) & 0xff000000) | ((tf.T << 8) & 0x00ff0000) |
                 //((tf.T >> 8) & 0x0000ff00) | ((tf.T >> 24) & 0x000000ff);
@@ -323,26 +315,45 @@ namespace Community.Cryptography
             //debug_log("BATCH 2 CE --> TF HAS: " + tf.ToString());
 
             ModifyBD(3, ref tf);
+            //debug_log("BATCH 3 BD --> TF HAS: " + tf.ToString());
             ModifyAT(3, ref tf);
+            //debug_log("BATCH 3 AT --> TF HAS: " + tf.ToString());
             ModifyTB(3, ref tf);
+            //debug_log("BATCH 3 TB --> TF HAS: " + tf.ToString());
             ModifyEA(3, ref tf);
+            //debug_log("BATCH 3 EA --> TF HAS: " + tf.ToString());
             ModifyDT(3, ref tf);
+            //debug_log("BATCH 3 DT --> TF HAS: " + tf.ToString());
             ModifyCE(3, ref tf);
+            //debug_log("BATCH 3 CE --> TF HAS: " + tf.ToString());
             ModifyBD(3, ref tf);
+            //debug_log("BATCH 3 BD --> TF HAS: " + tf.ToString());
             ModifyAT(3, ref tf);
+            //debug_log("BATCH 3 AT --> TF HAS: " + tf.ToString());
             ModifyTB(3, ref tf);
+            //debug_log("BATCH 3 TB --> TF HAS: " + tf.ToString());
             ModifyEA(3, ref tf);
+            //debug_log("BATCH 3 EA --> TF HAS: " + tf.ToString());
             ModifyDT(3, ref tf);
+            //debug_log("BATCH 3 DT --> TF HAS: " + tf.ToString());
             ModifyCE(3, ref tf);
+            //debug_log("BATCH 3 CE --> TF HAS: " + tf.ToString());
             ModifyBD(3, ref tf);
+            //debug_log("BATCH 3 BD --> TF HAS: " + tf.ToString());
             ModifyAT(3, ref tf);
+            //debug_log("BATCH 3 AT --> TF HAS: " + tf.ToString());
             ModifyTB(3, ref tf);
+            //debug_log("BATCH 3 TB --> TF HAS: " + tf.ToString());
             ModifyEA(3, ref tf);
+            //debug_log("BATCH 3 EA --> TF HAS: " + tf.ToString());
             ModifyDT(3, ref tf);
+            //debug_log("BATCH 3 DT --> TF HAS: " + tf.ToString());
             ModifyCE(3, ref tf);
+            //debug_log("BATCH 3 CE --> TF HAS: " + tf.ToString());
             ModifyBD(3, ref tf);
+            //debug_log("BATCH 3 BD --> TF HAS: " + tf.ToString());
             ModifyAT(3, ref tf);
-            //debug_log("BATCH 3 --> TF HAS: " + tf.ToString());
+            //debug_log("BATCH 3 AT --> TF HAS: " + tf.ToString());
 
             ModifyTB(4, ref tf);
             ModifyEA(4, ref tf);
@@ -399,6 +410,21 @@ namespace Community.Cryptography
 
         //#endregion
 
+
+        //#region SHA constants
+/*
+        static uint[] CONST = new uint[4]
+        {
+            0x5a827999, //1518500249
+            0x6ed9eba1, //1859775393
+            0x8f1bbcdc, //2400959708
+            0xca62c1d6  //3395469782
+        };
+        */
+        static long[] CONST;
+
+        //#endregion
+
         private static ulong maskInt;
         private static long maskFirstByte;
         private static long maskSecondByte;
@@ -416,6 +442,15 @@ namespace Community.Cryptography
             maskSecondByte = long.Parse("65280"); //0xFF00
             maskThirdByte = long.Parse("16711680"); //0xFF0000
             maskFourthByte = long.Parse("4278190080"); //0xFF000000
+
+
+            CONST = new long[4];
+            CONST[0] = long.Parse("1518500249");
+            CONST[1] = long.Parse("1859775393");
+            CONST[2] = long.Parse("2400959708");
+            CONST[3] = long.Parse("3395469782");
+
+        //#endregion
         }
 
         /// <summary>
@@ -656,6 +691,7 @@ namespace Community.Cryptography
 
         public static string GetSha1(string key)
         {
+            debug_log("GetSha1::" + key);
             byte[] bKey = Utf8.GetBytes(key);
             byte[] result = GetSha1(bKey);
             return BitConverter.ToHex(result);
@@ -782,7 +818,7 @@ namespace Community.Cryptography
             /* then results of 1st hash  */
             sha_ctx.Update(digest);
             digest = sha_ctx.Final();         /* finish up 2nd pass        */
-    //              debugBytes(digest, "After FINAL DIGEST");
+                  debugBytes(digest, "After FINAL DIGEST");
             return digest;
         }
 

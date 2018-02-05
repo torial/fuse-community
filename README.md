@@ -11,7 +11,7 @@ Currently contains:
 
 In addition, it contains sample code for using the libraries.
 
-##Usage
+## Usage
 A Javascript API is available, and the usage of it is shown in the ExampleUsage.ux file.  To link the fuse project to the Community Fuse project make sure that the fuse-community.unoproj is included in your unoproj file like the following:
 
 ```
@@ -49,7 +49,7 @@ To get a one time password at a particular instance (ie the first, or the fiftee
 
 ```
 
-##License
+## License
 Unless otherwise noted on individual files, the license is BSD v2.0 : 
 
 Copyright (c) 2015, Sean McKay
